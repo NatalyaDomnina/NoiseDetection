@@ -3,23 +3,32 @@ import random
 import numpy as np
 
 # create video from the picture
-def createVideo(noise):
-    input_img = cv2.imread('C:/Users/Natali/Documents/132.png')
+def createVideo(input_img, pathVideo):
     height, width, layers =  input_img.shape
-    pathVideo = "C:/Users/Natali/Documents/video.avi"
     fours = cv2.VideoWriter_fourcc(*'MJPG')
     frames = 15
     video = cv2.VideoWriter(pathVideo,fours,frames,(width,height))
+    for i in range(100):
+        video.write(input_img)
+    cv2.destroyAllWindows()
+    video.release()
 
-    random.seed(version=2)
+# create video with noise from the picture
+def createVideoWithNoise(input_img, noise, pathVideo):
+    height, width, layers = input_img.shape
+    fours = cv2.VideoWriter_fourcc(*'MJPG')
+    frames = 15
+    video = cv2.VideoWriter(pathVideo, fours, frames, (width, height))
+
+    random.seed(version = 2)
     r = random.randrange(0, 100, 1)
     x, y, c = noise.shape
 
     for i in range(100):
         if i == r:
             noise_img = input_img.copy()
-            ofs_y1 = random.randrange(0, height-x, 1)
-            ofs_x1 = random.randrange(0, width-y, 1)
+            ofs_y1 = random.randrange(0, height - x, 1)
+            ofs_x1 = random.randrange(0, width - y, 1)
             y1, y2 = ofs_y1, ofs_y1 + noise.shape[0]
             x1, x2 = ofs_x1, ofs_x1 + noise.shape[1]
             alpha_s = noise[:, :, 3] / 255.0
@@ -27,17 +36,13 @@ def createVideo(noise):
             for c in range(0, 3):
                 noise_img[y1:y2, x1:x2, c] = (alpha_s * noise[:, :, c] +
                                               alpha_l * noise_img[y1:y2, x1:x2, c])
-
             video.write(noise_img)
         else:
             video.write(input_img)
-    cv2.destroyAllWindows()
-    video.release()
-    return pathVideo
 
 # returns the frame number with an noise
-def noiseDetection(video):
-    cap = cv2.VideoCapture(video)
+def noiseDetection(pathVideo):
+    cap = cv2.VideoCapture(pathVideo)
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     for i in range(video_length):
@@ -83,13 +88,30 @@ def noiseDetection(video):
         if (box[0] - box[1])[0][0] > 20 or (box[0] - box[1])[0][1] > 20:
             cv2.drawContours(frame, [box], -1, (0, 255, 0), 3)
             res = num_frame
-
+            frame_noise = frame.copy()
 
         cv2.imshow("Image", frame)
         #cv2.waitKey(0)
         cv2.waitKey(20)
-    return res
-
+    return res, frame_noise
+'''
+# путь к текстуре
+input_img = cv2.imread('C:/Users/Natali/Documents/132.png')
+# путь к помехе
 noise = cv2.imread('C:/Users/Natali/Documents/555.png', cv2.IMREAD_UNCHANGED)
-video = createVideo(noise)
-print(noiseDetection(video))
+# путь к видео (где будет создано)
+pathVideo = "C:/Users/Natali/Documents/video.avi"
+
+# создаем чистое видео
+createVideo(input_img, pathVideo)
+# создаем видео с помехой
+createVideoWithNoise(input_img, noise, pathVideo)
+# выводим номер кадра с найденной помехой
+res = noiseDetection(pathVideo)
+num_fr = res[0]
+print(num_fr)
+# и сам кадр
+fr = res[1]
+cv2.imshow('000', fr)
+cv2.waitKey(0)
+'''
