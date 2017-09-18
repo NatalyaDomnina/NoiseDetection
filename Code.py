@@ -6,9 +6,9 @@ import numpy as np
 def createVideo(input_img, pathVideo):
     height, width, layers =  input_img.shape
     fours = cv2.VideoWriter_fourcc(*'MJPG')
-    frames = 15
+    frames = 25
     video = cv2.VideoWriter(pathVideo,fours,frames,(width,height))
-    for i in range(100):
+    for i in range(500):
         video.write(input_img)
     cv2.destroyAllWindows()
     video.release()
@@ -17,14 +17,14 @@ def createVideo(input_img, pathVideo):
 def createVideoWithNoise(input_img, noise, pathVideo):
     height, width, layers = input_img.shape
     fours = cv2.VideoWriter_fourcc(*'MJPG')
-    frames = 15
+    frames = 25
     video = cv2.VideoWriter(pathVideo, fours, frames, (width, height))
 
     random.seed(version = 2)
-    r = random.randrange(0, 100, 1)
+    r = random.randrange(0, 500, 1)
     x, y, c = noise.shape
 
-    for i in range(100):
+    for i in range(500):
         if i == r:
             noise_img = input_img.copy()
             ofs_y1 = random.randrange(0, height - x, 1)
@@ -51,25 +51,29 @@ def noiseDetection(pathVideo):
 
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        frame2 = cv2.pyrDown(frame) # !
-        frame3 = cv2.pyrDown(frame2)
-        frame3 = frame3^2
-        frame1_2 = cv2.pyrUp(frame)
-        frame2_2 = cv2.pyrUp(frame2)
-        frame3_2 = cv2.pyrUp(frame3) # !
+        G = frame_gray.copy()
+        gpA = [G]
+        for i in range(6):
+            G = cv2.pyrDown(G)
+            gpA.append(G)
 
-        frame2_3_2 = frame2 - frame3_2 # !
+        lpA = [gpA[5]]
+        for i in range(5, 0, -1):
+            GE = cv2.pyrUp(gpA[i])
+            L = cv2.subtract(gpA[i - 1], GE)
+            lpA.append(L)
 
-        gradX = cv2.Sobel(frame_gray, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
-        gradY = cv2.Sobel(frame_gray, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
+        lpA[5] =  lpA[5] ^ 2
 
-        gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
+        im_res = lpA[5] - gpA[0]
+        im_res = cv2.convertScaleAbs(im_res)
 
-        blurred = cv2.blur(gradient, (5, 5))
-        (_, thresh) = cv2.threshold(blurred, 215, 255, cv2.THRESH_BINARY)
+        #cv2.imshow("Sub", im_res)
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        blurred = cv2.blur(im_res, (5, 5))
+        (_, thresh) = cv2.threshold(blurred, 175, 290, cv2.THRESH_BINARY)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
         closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
         closed = 255 - closed
@@ -85,25 +89,25 @@ def noiseDetection(pathVideo):
 
         box = np.array(box).reshape((-1, 1, 2)).astype(np.int32)
 
-        if (box[0] - box[1])[0][0] > 20 or (box[0] - box[1])[0][1] > 20:
+        if (box[0] - box[1])[0][0] > 40 or (box[0] - box[1])[0][1] > 40:
             cv2.drawContours(frame, [box], -1, (0, 255, 0), 3)
             res = num_frame
             frame_noise = frame.copy()
 
-        cv2.imshow("Image", frame)
-        #cv2.waitKey(0)
-        cv2.waitKey(20)
+        cv2.imshow("Video", frame)
+        cv2.waitKey(1)
     return res, frame_noise
-'''
+
 # путь к текстуре
 input_img = cv2.imread('C:/Users/Natali/Documents/132.png')
 # путь к помехе
-noise = cv2.imread('C:/Users/Natali/Documents/555.png', cv2.IMREAD_UNCHANGED)
+noise = cv2.imread('C:/Users/Natali/Documents/444.png', cv2.IMREAD_UNCHANGED)
+noise = cv2.resize(noise, (0,0), fx=0.1, fy=0.1)
 # путь к видео (где будет создано)
 pathVideo = "C:/Users/Natali/Documents/video.avi"
 
 # создаем чистое видео
-createVideo(input_img, pathVideo)
+#createVideo(input_img, pathVideo)
 # создаем видео с помехой
 createVideoWithNoise(input_img, noise, pathVideo)
 # выводим номер кадра с найденной помехой
@@ -112,6 +116,6 @@ num_fr = res[0]
 print(num_fr)
 # и сам кадр
 fr = res[1]
-cv2.imshow('000', fr)
+sres = str(num_fr)
+cv2.imshow(sres, fr)
 cv2.waitKey(0)
-'''
