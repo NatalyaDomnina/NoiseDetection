@@ -50,7 +50,6 @@ def noiseDetection(pathVideo):
         num_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         G = frame_gray.copy()
         gpA = [G]
         for i in range(6):
@@ -68,18 +67,18 @@ def noiseDetection(pathVideo):
         im_res = lpA[5] - gpA[0]
         im_res = cv2.convertScaleAbs(im_res)
 
-        #cv2.imshow("Sub", im_res)
+        blurred = cv2.blur(im_res, (9, 9))
+        (_, thresh) = cv2.threshold(blurred, 150, 290, cv2.THRESH_BINARY)
 
-        blurred = cv2.blur(im_res, (5, 5))
-        (_, thresh) = cv2.threshold(blurred, 175, 290, cv2.THRESH_BINARY)
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
         closed = 255 - closed
 
         closed = cv2.erode(closed, None, iterations=4)
         closed = cv2.dilate(closed, None, iterations=4)
+
+        cv2.imshow("closed", closed)
 
         (_, cnts, _) = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
@@ -89,7 +88,7 @@ def noiseDetection(pathVideo):
 
         box = np.array(box).reshape((-1, 1, 2)).astype(np.int32)
 
-        if (box[0] - box[1])[0][0] > 40 or (box[0] - box[1])[0][1] > 40:
+        if (box[0] - box[1])[0][0] > 60 or (box[0] - box[1])[0][1] > 60:
             cv2.drawContours(frame, [box], -1, (0, 255, 0), 3)
             res = num_frame
             frame_noise = frame.copy()
@@ -99,10 +98,10 @@ def noiseDetection(pathVideo):
     return res, frame_noise
 
 # путь к текстуре
-input_img = cv2.imread('C:/Users/Natali/Documents/132.png')
+input_img = cv2.imread('C:/Users/Natali/Documents/908.png')
 # путь к помехе
-noise = cv2.imread('C:/Users/Natali/Documents/444.png', cv2.IMREAD_UNCHANGED)
-noise = cv2.resize(noise, (0,0), fx=0.1, fy=0.1)
+noise = cv2.imread('C:/Users/Natali/Documents/222.png', cv2.IMREAD_UNCHANGED)
+noise = cv2.resize(noise, (0,0), fx=0.4, fy=0.4)
 # путь к видео (где будет создано)
 pathVideo = "C:/Users/Natali/Documents/video.avi"
 
