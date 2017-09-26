@@ -12,5 +12,6 @@ blurred = cv2.blur(im_res, (9, 9))
 ```
 
 Примеры работы:
+
 ![](https://pp.userapi.com/c639428/v639428753/56109/jhp3Jmy3kT0.jpg) ![](https://pp.userapi.com/c639428/v639428777/4b651/04-_y-MhSy4.jpg)
 ![](https://pp.userapi.com/c639428/v639428777/4b658/2T_DLkgoUnM.jpg) ![](https://pp.userapi.com/c639428/v639428777/4b65f/kL24hV3bdBk.jpg)
